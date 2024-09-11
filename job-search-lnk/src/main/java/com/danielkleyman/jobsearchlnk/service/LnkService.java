@@ -76,17 +76,19 @@ public class LnkService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
-        } finally {
-            if (driver != null) {
-                driver.quit();
-            }
-        }
+        } 
+//        finally {
+//            if (driver != null) {
+//                driver.quit();
+//            }
+//        }
     }
 
     private void openPage(WebDriver driver, WebDriverWait wait) {
         boolean reload = true;
         while (reload) {
             driver.get(MAIN_URL);
+            closePushWindow(driver);
             try {
                 WebElement jobCounter = wait.until(ExpectedConditions.visibilityOfElementLocated(
                         By.cssSelector(".results-context-header__job-count")));
@@ -115,7 +117,15 @@ public class LnkService {
             }
         }
     }
-
+    private void closePushWindow(WebDriver driver) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(2));
+        try {
+            WebElement closeButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#base-contextual-sign-in-modal > div > section > button")));
+            closeButton.click();
+        } catch (TimeoutException e) {
+        }
+        ;
+    }
     private WebDriver initializeWebDriver() {
         System.setProperty("webdriver.edge.driver", EDGE_DRIVER_PATH);
 
@@ -128,15 +138,15 @@ public class LnkService {
     }
 
     private void printJobCount(WebDriver driver) {
+        WebElement jobCountElement = driver.findElement(By.cssSelector(".results-context-header__job-count"));
+        String jobCountText = jobCountElement.getText().replace("+", "").replace(",", "");
+
         try {
-            WebElement jobCountElement = driver.findElement(By.cssSelector(".results-context-header__job-count"));
-            String jobCountText = jobCountElement.getText().replace("+", "").replace(",", "").replaceAll("[^0-9]", ""); // Извлекаем только числовую часть
             jobCount = Integer.parseInt(jobCountText);
-            LOGGER.info("Job count: " + jobCount);
         } catch (NumberFormatException e) {
             LOGGER.severe("Failed to parse job count: " + e.getMessage());
-        } catch (NoSuchElementException e) {
-            LOGGER.severe("Job count element not found: " + e.getMessage());
+            return;
         }
+        LOGGER.info("Job count: " + jobCount);
     }
 }
