@@ -141,11 +141,13 @@ public class LnkService {
         WebElement jobCountElement = driver.findElement(By.cssSelector(".results-context-header__job-count"));
         String jobCountText = jobCountElement.getText().replace("+", "").replace(",", "");
 
+        // Извлекаем только числовую часть из строки
+        String numberOnly = jobCountText.replaceAll("\\D+", ""); // Удаляем все символы, кроме цифр
+
         try {
-            jobCount = Integer.parseInt(jobCountText);
+            jobCount = Integer.parseInt(numberOnly); // Преобразуем строку в число
         } catch (NumberFormatException e) {
             LOGGER.severe("Failed to parse job count: " + e.getMessage());
-            return;
         }
         LOGGER.info("Job count: " + jobCount);
     }
