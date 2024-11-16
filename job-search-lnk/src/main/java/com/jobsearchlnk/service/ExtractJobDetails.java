@@ -1,33 +1,46 @@
-package com.danielkleyman.jobsearchlnk.service;
+package com.jobsearchlnk.service;
 
-import com.danielkleyman.jobsearchapi.service.AIService;
+import com.jobsearchapi.service.AIService;
+import com.jobsearchlnk.model.AllreadyAdded;
+import com.jobsearchlnk.repo.JobSearchRepo;
+
+import org.openqa.selenium.WebDriver;
+
 import org.openqa.selenium.TimeoutException;
+
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import static com.jobsearchlnk.service.LnkService.LOGGER;
+
 import java.time.Duration;
+
 import java.util.NoSuchElementException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.danielkleyman.jobsearchlnk.service.LnkService.LOGGER;
-
 
 @Component
 public class ExtractJobDetails {
-    public final AIService aiService;
+   	public final AIService aiService;
     int jobsVisibleOnPage;
+    final JobSearchRepo repo;
 
-    public ExtractJobDetails() {
+    public ExtractJobDetails(JobSearchRepo repo) {
         this.aiService = new AIService(new RestTemplate());
         this.jobsVisibleOnPage = 0;
+		this.repo = repo;
+		
+		
+		
     }
+    
 
     public void extractJobDetails(WebDriver driver, WebDriverWait wait, Map<String, List<String>> jobDetails) {
-
+    	
         extractProcess(driver, wait, jobDetails);
 
     }
@@ -76,6 +89,7 @@ public class ExtractJobDetails {
         System.out.println("get card number: " + i);
         List<String> url = new ArrayList<>();
         List<String> details = new ArrayList<>();
+        
         try {
             // Extract job title and URL
             boolean extractionTitleAndUrl = executeWithTimeout(() -> extractTitleAndUrl(jobCard, details, url), 20000);
@@ -86,9 +100,11 @@ public class ExtractJobDetails {
             // Skip processing if URL has already been processed
             int positionIndex = jobUrl.indexOf("position");
             String extractedPart = jobUrl.substring(0, positionIndex + "position".length());
-            if (LnkService.alreadyAdded.contains(extractedPart)) {
-                System.out.println("URL already been added: " + jobUrl);
-                return false; // Continue with the next job card
+            AllreadyAdded allreadyAdded = repo.findById(extractedPart).orElse(null);
+            
+            if (allreadyAdded != null) {
+                    System.out.println("URL already been added: " + jobUrl);
+                    return false;
             }
             showExpandedContent(wait, i, jobCard, jobCards);
             boolean extractionExpandedContent = extractExpandedContent(driver, details);
@@ -102,7 +118,12 @@ public class ExtractJobDetails {
 
             // Add job details to the map
             jobDetails.putIfAbsent(jobUrl, details);
-            LnkService.alreadyAdded.add(extractedPart);
+            allreadyAdded = new AllreadyAdded(extractedPart);
+        	
+            repo.save(allreadyAdded);
+            System.out.println("save new url :" + jobUrl);
+         
+            
         } catch (Exception e) {
             System.err.println("Unexpected error extracting details from job card: " + e.getMessage());
         }
@@ -264,7 +285,7 @@ public class ExtractJobDetails {
 
     private static boolean filterDescription(String aboutJob) {
         String aboutJob1 = aboutJob.toLowerCase();
-        Set<String> includeKeywords = Set.of("java", "spring", "microservice", "react", "javascript", "oop",
+        Set<String> includeKeywords = Set.of("java","next","senior","software","developer", "spring", "microservice", "react", "javascript", "oop",
                 "typescript", "backend", "back-end", "back end", "מפתח", "מתכנת", "fullstack", "full-stack", "full stack"
         );
 

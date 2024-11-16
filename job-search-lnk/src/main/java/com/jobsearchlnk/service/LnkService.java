@@ -1,6 +1,5 @@
-package com.danielkleyman.jobsearchlnk.service;
+package com.jobsearchlnk.service;
 
-import com.danielkleyman.jobsearchapi.service.WriteToExcel;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -12,6 +11,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.jobsearchapi.service.WriteToExcel;
 
 import java.time.Duration;
 import java.util.*;
@@ -28,14 +29,13 @@ public class LnkService {
     private static final String WEBSITE_NAME = "Linkedin";
     private final String MAIN_URL = String.format("https://www.linkedin.com/jobs/search?keywords=&location=Israel&geoId=101620260&f_TPR=r%s&position=1&pageNum=0", SCHEDULED_TIME_STRING);
     private final Map<String, List<String>> JOB_DETAILS = new LinkedHashMap<>();
-    public static Set<String> alreadyAdded = new HashSet<>();
-
+    
     public static int jobCount;
-    private final ExtractJobDetails extractJobDetails; // Injected dependency
+    private final ExtractJobDetails extractJobDetails;
 
     @Autowired
     public LnkService(ExtractJobDetails extractJobDetails) {
-        this.extractJobDetails = extractJobDetails; // Initialize injected dependency
+        this.extractJobDetails = extractJobDetails;
         jobCount = 0;
     }
 
@@ -45,7 +45,7 @@ public class LnkService {
         WebDriverWait localWait;
         try {
             localDriver = initializeWebDriver();
-            localWait = new WebDriverWait(localDriver, Duration.ofSeconds(15)); // Увеличено время ожидания
+            localWait = new WebDriverWait(localDriver, Duration.ofSeconds(15)); 
             getResults(localDriver, localWait);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error during scheduled task", e);
@@ -75,13 +75,8 @@ public class LnkService {
             JOB_DETAILS.clear();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            LOGGER.severe("Thread was interrupted during job details extraction: " + e.getMessage());
         } 
-//        finally {
-//            if (driver != null) {
-//                driver.quit();
-//            }
-//        }
     }
 
     private void openPage(WebDriver driver, WebDriverWait wait) {
@@ -105,6 +100,7 @@ public class LnkService {
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     LOGGER.severe("Interrupted while waiting: " + ex.getMessage());
+                    return;
                 } catch (TimeoutException ignored) {
                 }
                 LOGGER.info("Reloading page");
@@ -114,18 +110,21 @@ public class LnkService {
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 LOGGER.severe("Interrupted while waiting: " + ex.getMessage());
+                return;
             }
         }
     }
+    
     private void closePushWindow(WebDriver driver) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(2));
         try {
             WebElement closeButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#base-contextual-sign-in-modal > div > section > button")));
             closeButton.click();
-        } catch (TimeoutException e) {
+        } catch (TimeoutException ignored) {
+            LOGGER.info("No push window found");
         }
-        ;
     }
+
     private WebDriver initializeWebDriver() {
         System.setProperty("webdriver.edge.driver", EDGE_DRIVER_PATH);
 
@@ -141,11 +140,10 @@ public class LnkService {
         WebElement jobCountElement = driver.findElement(By.cssSelector(".results-context-header__job-count"));
         String jobCountText = jobCountElement.getText().replace("+", "").replace(",", "");
 
-        // Извлекаем только числовую часть из строки
-        String numberOnly = jobCountText.replaceAll("\\D+", ""); // Удаляем все символы, кроме цифр
+        String numberOnly = jobCountText.replaceAll("\\D+", ""); 
 
         try {
-            jobCount = Integer.parseInt(numberOnly); // Преобразуем строку в число
+            jobCount = Integer.parseInt(numberOnly);
         } catch (NumberFormatException e) {
             LOGGER.severe("Failed to parse job count: " + e.getMessage());
         }

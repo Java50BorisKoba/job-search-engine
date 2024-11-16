@@ -1,4 +1,4 @@
-package com.danielkleyman.jobsearchlnk;
+package com.jobsearchalljobs;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,10 +6,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class JobSearchLnkApplication {
+public class JobSearchAlljobsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(JobSearchLnkApplication.class, args);
+        SpringApplication.run(JobSearchAlljobsApplication.class, args);
     }
 
 }

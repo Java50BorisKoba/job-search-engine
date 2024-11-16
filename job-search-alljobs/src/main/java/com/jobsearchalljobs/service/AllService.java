@@ -1,4 +1,4 @@
-package com.danielkleyman.jobsearchalljobs.service;
+package com.jobsearchalljobs.service;
 
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.ViewportSize;

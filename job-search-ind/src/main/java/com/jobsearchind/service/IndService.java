@@ -1,16 +1,18 @@
-package com.danielkleyman.jobsearchind.service;
+package com.jobsearchind.service;
 
-import com.danielkleyman.jobsearchapi.service.WriteToExcel;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.jobsearchapi.service.WriteToExcel;
 
 import java.time.Duration;
 import java.util.*;
@@ -22,12 +24,11 @@ public class IndService {
 
     private static final long SCHEDULED_TIME = 86400000;
     public static final Logger LOGGER = Logger.getLogger(IndService.class.getName());
-    public static final String CHROME_DRIVER_PATH = System.getenv("CHROME_DRIVER_PATH");
+    public static final String EDGE_DRIVER_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedgedriver.exe";
     private static final String WEBSITE_NAME = "Indeed";
     private final String URL = "https://il.indeed.com/jobs?q=&l=israel&fromage=1&vjk=087662bdbb912e05";
     private final Map<String, List<String>> JOB_DETAILS = new LinkedHashMap<>();
     private final ExtractJobDetails extractJobDetails; // Injected dependency
-    public static List<String> urlAlreadyAdded = new ArrayList<>();
     public static int jobCount;
 
     @Autowired
@@ -111,14 +112,15 @@ public class IndService {
         return min + random.nextInt((int) (max - min + 1));
     }
 
-    private WebDriver initializeWebDriver() {
-        if (CHROME_DRIVER_PATH == null) {
-            throw new IllegalStateException("CHROME_DRIVER_PATH environment variable not set");
+    @SuppressWarnings("unused")
+	private WebDriver initializeWebDriver() {
+        if (EDGE_DRIVER_PATH == null) {
+            throw new IllegalStateException("EDGE_DRIVER_PATH environment variable not set");
         }
-        System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--incognito");
-        WebDriver driver = new ChromeDriver(options);
+        System.setProperty("webdriver.edge.driver", EDGE_DRIVER_PATH);
+        EdgeOptions options = new EdgeOptions();
+        options.setBinary("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe");
+        WebDriver driver = new EdgeDriver(options);
         driver.manage().window().maximize();
         return driver;
     }

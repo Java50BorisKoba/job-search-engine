@@ -1,4 +1,4 @@
-package com.danielkleyman.jobsearchlnk.service;
+package com.jobsearchalljobs.service;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -14,7 +14,6 @@ public class Scrolling implements Runnable {
     private final WebDriver driver;
     private volatile boolean running = true; // Control flag for thread execution
     Map<String, String> jobDetails;
-    private Thread scrollThread; // Reference to the scrolling thread
 
     public Scrolling(WebDriver driver) {
         this.driver = driver;
@@ -65,20 +64,11 @@ public class Scrolling implements Runnable {
     // Method to stop the thread
     public void stop() {
         running = false;
-        if (scrollThread != null) {
-            try {
-                scrollThread.join(); // Wait for the thread to finish
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // Restore interrupted status
-            }
-        }
     }
 
     // Method to start the thread
     public void start() {
-
-        scrollThread = new Thread(this);
-        scrollThread.start();
+        new Thread(this).start();
     }
 }
 

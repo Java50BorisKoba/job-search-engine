@@ -1,6 +1,6 @@
-package com.danielkleyman.jobsearchalljobs.service;
+package com.jobsearchalljobs.service;
 
-import com.danielkleyman.jobsearchapi.service.AIService;
+import com.jobsearchapi.service.AIService;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import org.springframework.stereotype.Component;

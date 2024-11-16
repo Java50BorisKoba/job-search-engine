@@ -1,8 +1,11 @@
-package com.danielkleyman.jobsearchind.service;
+package com.jobsearchind.service;
 
-import com.danielkleyman.jobsearchapi.service.AIService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jobsearchapi.service.AIService;
+import com.jobsearchind.model.AllreadyAdded;
+import com.jobsearchind.repo.JobSearchRepo;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -23,11 +26,13 @@ public class ExtractJobDetails {
     public final AIService aiService;
     int jobsVisibleOnPage;
     private final ExecutorService executorService;
+    final JobSearchRepo repo;
 
-    public ExtractJobDetails() {
+    public ExtractJobDetails(JobSearchRepo repo) {
         this.aiService = new AIService(new RestTemplate());
         this.jobsVisibleOnPage = 0;
         this.executorService = Executors.newSingleThreadExecutor(); // Create a single thread executor
+        this.repo = repo;
     }
 
     public void extractProcess(WebDriver driver, Map<String, List<String>> jobDetails, WebDriver jobDescriptionDriver, WebDriverWait jobDescriptionWait) {
@@ -89,6 +94,9 @@ public class ExtractJobDetails {
         String city = jobNode.path("jobLocationCity").asText();
         details.add(city);
         jobDetails.putIfAbsent(url, details);
+        AllreadyAdded allreadyAdded = new AllreadyAdded(url);
+        repo.save(allreadyAdded);
+        System.out.println("save new url :" + url);
         System.out.println("-------------------------------");
     }
 
@@ -100,18 +108,19 @@ public class ExtractJobDetails {
         String prompt = jobTitle + ". " + jobDescription;
         int aiResponse = aiService.getResponse(prompt);
         System.out.println(jobTitle + " gpt score = " + aiResponse);
+        System.out.println("----------------------------------------");
         return aiResponse >= 21; // Skip this job card if the extended text does not match filter criteria
     }
 
     private boolean checkCondition(String url, String jobTitle) {
-        if (IndService.urlAlreadyAdded.contains(url)) {
+    	AllreadyAdded allreadyAdded = repo.findById(url).orElse(null);
+        if (allreadyAdded != null) {
             return false;
         }
         if (filterTitle(jobTitle)) {
             System.out.println("Job title excluded: " + jobTitle);
             return false;
         }
-        System.out.println("Job Title: " + jobTitle);
         return true;
     }
 
