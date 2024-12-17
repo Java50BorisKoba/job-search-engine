@@ -109,7 +109,7 @@ public class ExtractJobDetails {
         int aiResponse = aiService.getResponse(prompt);
         System.out.println(jobTitle + " gpt score = " + aiResponse);
         System.out.println("----------------------------------------");
-        return aiResponse >= 21; // Skip this job card if the extended text does not match filter criteria
+        return aiResponse >= 15; // Skip this job card if the extended text does not match filter criteria
     }
 
     private boolean checkCondition(String url, String jobTitle) {
@@ -163,16 +163,16 @@ public class ExtractJobDetails {
 
     private static boolean filterTitle(String jobTitle) {
         Set<String> excludeKeywords = Set.of(
-                "lead", "leader", "devops", "manager", "qa", "mechanical", "infrastructure", "integration", "civil",
-                "principal", "customer", "embedded", "system", " verification", "electrical", "support", "complaint", "solution", "solutions", "simulation", "technical",
-                "manufacturing", "validation", "finops", "hardware", "devsecops", "motion", "machine Learning", "design", "sr.", "quality", "architect", "head",
-                "director", "president", "executive", "detection", "industrial", "chief", "specialist", "algorithm", "architecture", "admin", " researcher",
-                " data science", "webmaster", "medical", "associate", "mrb", "accountant", "waiter", "dft", "test", "musicologist", "sales", "media", "product",
-                "reliability", "account", "representative", "Architect", "Analyst", "Account", "Executive", "Specialist", "Associate", "devtest", "big data", "digital",
-                "coordinator", "intern", "researcher", "network", "security", "malware", " intelligence", " algo-dev", "electro-optics", "secops", "implementer",
-                "ml", "picker", "revenue", "controller", "פלנר", "טכנאי", "emulation", "tester", "counsel", "administrative", "assistant", "production", " scientist",
-                "penetration", " investigations", "intelligence", "hrbp", "officer", "curriculum", " business", "team", "staff", "automation", "machine learning"
-                , "mechanic", "ראש", "server", "writer", "בכיר", "בודק", "מנתח");
+                "lead", "leader",  "manager", "qa", "mechanical", "civil",
+                "principal",   "electrical",   "simulation", "technical",
+                "manufacturing",  "hardware", "devsecops", "motion", "quality",  "head",
+                "director", "president",  "detection", "industrial", "chief", "admin",
+                 "webmaster", "medical", "associate", "mrb",  "waiter", "dft", "test", "musicologist", "sales", "media", 
+                   "devtest", "digital",
+                "malware", " intelligence", " algo-dev", "electro-optics", "secops", 
+                "ml", "picker", "revenue",  "פלנר", "טכנאי", "emulation", "tester", "counsel", "administrative", "assistant", 
+                "penetration", " investigations", "intelligence", "hrbp", "officer", "curriculum", " business",  "staff"
+                , "mechanic", "ראש",  "writer", "בכיר", "בודק");
         // Check if any exclude keyword is present in the job title
         return excludeKeywords.stream()
                 .anyMatch(jobTitle.toLowerCase()::contains);
@@ -180,10 +180,11 @@ public class ExtractJobDetails {
 
     private static boolean filterDescription(String aboutJob) {
         String aboutJob1 = aboutJob.toLowerCase();
-        Set<String> includeKeywords = Set.of("java", "spring", "microservice", "react", "javascript", "oop",
-                "typescript", "backend", "back-end", "back end", "fullstack", "full-stack", "full stack"
+        Set<String> includeKeywords = Set.of("java","next","senior","software","developer", "spring", "microservice", "react","react.js","software engineer", "javascript", "next.js","backend engineer",
+                "typescript",
+                "typescript.js","full stack developer","devops engineer","back end developer","expert full-stack dev","xrm","full stack engineer", "product designer - cloud services","backend", "back-end", "back end", "מפתח", "מתכנת", "fullstack", "full-stack", "full stack","engineer","פיתוח","python","cloud","aws","azure"
         );
         return includeKeywords.stream()
-                .anyMatch(aboutJob1::contains);
-    }
+                .anyMatch(keyword -> aboutJob1.contains(keyword));
+        }
 }
