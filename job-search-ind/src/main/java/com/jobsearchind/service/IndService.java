@@ -13,9 +13,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.jobsearchapi.service.WriteToExcel;
+import com.jobsearchapi.service.WriteToExcelInd;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,13 +29,13 @@ public class IndService {
     public static final String EDGE_DRIVER_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedgedriver.exe";
     private static final String WEBSITE_NAME = "Indeed";
     private final String URL = "https://il.indeed.com/jobs?q=&l=israel&fromage=1&vjk=087662bdbb912e05";
-    private final Map<String, List<String>> JOB_DETAILS = new LinkedHashMap<>();
-    private final ExtractJobDetails extractJobDetails; // Injected dependency
+    private final Map<String, List<String>> JOB_DETAILS = new ConcurrentHashMap<>();
+    private final ExtractJobDetails extractJobDetails;
     public static int jobCount;
 
     @Autowired
     public IndService(ExtractJobDetails extractJobDetails) {
-        this.extractJobDetails = extractJobDetails; // Initialize injected dependency
+        this.extractJobDetails = extractJobDetails;
         jobCount = 0;
     }
 
@@ -68,7 +70,8 @@ public class IndService {
                 LOGGER.info("Jobs found: " + jobCount);
                 clickNextPage(wait);
             }
-            WriteToExcel.writeToExcel(JOB_DETAILS, WEBSITE_NAME);
+            
+            
             long endTime = System.currentTimeMillis();
             long totalTime = (endTime - startTime) / 1000;
             LOGGER.info("Extraction completed in " + totalTime + " seconds");
@@ -90,15 +93,13 @@ public class IndService {
             WebElement nextPageButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("a[data-testid='pagination-page-next']")));
             return nextPageButton.isDisplayed();
         } catch (Exception e) {
-            return false;  // If the element is not found or not visible
+            return false;
         }
     }
 
     public void clickNextPage(WebDriverWait wait) {
         try {
-            // Wait until the "Next Page" button is clickable
             WebElement nextPageButton = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("a[data-testid='pagination-page-next']")));
-            // Click on the "Next Page" button
             nextPageButton.click();
             System.out.println("Navigated to the next page.");
         } catch (Exception e) {
@@ -108,12 +109,10 @@ public class IndService {
 
     public static long randomTimeoutCalculation(long min, long max) {
         Random random = new Random();
-        // Generate a random long value between 3000 and 6000 milliseconds
         return min + random.nextInt((int) (max - min + 1));
     }
 
-    @SuppressWarnings("unused")
-	private WebDriver initializeWebDriver() {
+    private WebDriver initializeWebDriver() {
         if (EDGE_DRIVER_PATH == null) {
             throw new IllegalStateException("EDGE_DRIVER_PATH environment variable not set");
         }
@@ -125,4 +124,3 @@ public class IndService {
         return driver;
     }
 }
-

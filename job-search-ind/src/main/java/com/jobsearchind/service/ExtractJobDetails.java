@@ -3,6 +3,8 @@ package com.jobsearchind.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobsearchapi.service.AIService;
+import com.jobsearchapi.service.WriteToExcel;
+import com.jobsearchapi.service.WriteToExcelInd;
 import com.jobsearchind.model.AllreadyAdded;
 import com.jobsearchind.repo.JobSearchRepo;
 
@@ -20,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 public class ExtractJobDetails {
@@ -96,6 +99,11 @@ public class ExtractJobDetails {
         jobDetails.putIfAbsent(url, details);
         AllreadyAdded allreadyAdded = new AllreadyAdded(url);
         repo.save(allreadyAdded);
+        System.out.println(url);
+        System.out.println(city);
+        System.out.println(companyName);
+        WriteToExcelInd.writeToExcel(url, city, companyName);
+   
         System.out.println("save new url :" + url);
         System.out.println("-------------------------------");
     }
@@ -163,7 +171,7 @@ public class ExtractJobDetails {
 
     private static boolean filterTitle(String jobTitle) {
         Set<String> excludeKeywords = Set.of(
-                "lead", "leader",  "manager", "qa", "mechanical", "civil",
+                "lead", "leader",  "manager", "qa", "mechanical", "civil", "embedded",
                 "principal",   "electrical",   "simulation", "technical",
                 "manufacturing",  "hardware", "devsecops", "motion", "quality",  "head",
                 "director", "president",  "detection", "industrial", "chief", "admin",
@@ -179,12 +187,29 @@ public class ExtractJobDetails {
     }
 
     private static boolean filterDescription(String aboutJob) {
-        String aboutJob1 = aboutJob.toLowerCase();
-        Set<String> includeKeywords = Set.of("java","next","senior","software","developer", "spring", "microservice", "react","react.js","software engineer", "javascript", "next.js","backend engineer",
-                "typescript",
-                "typescript.js","full stack developer","devops engineer","back end developer","expert full-stack dev","xrm","full stack engineer", "product designer - cloud services","backend", "back-end", "back end", "מפתח", "מתכנת", "fullstack", "full-stack", "full stack","engineer","פיתוח","python","cloud","aws","azure"
+//        if (aboutJob == null || aboutJob.isEmpty()) {
+//            return true; // Если описание пустое, сразу исключаем
+//        }
+
+        String aboutJobLower = aboutJob.toLowerCase();
+        
+        // Набор ключевых слов
+        Set<String> includeKeywords = Set.of(
+            "java", "next", "senior", "software", "developer", "spring", "microservice", "react", "react.js", "software engineer", "javascript", "next.js", "backend engineer",
+            "typescript", "מפתח/ת full stack", "מפתח/ת back end", "ai specalist","senior data engineer",
+            "typescript.js", "full stack developer", "devops engineer", "back end developer",
+            "expert full-stack dev", "xrm", "full stack engineer", "product designer - cloud services",
+            "backend", "back-end", "back end", "מפתח", "מתכנת", "fullstack", "full-stack","senior backend developer",
+            "full stack", "engineer", "פיתוח", "python", "cloud", "aws", "azure","senior software engineer"
         );
-        return includeKeywords.stream()
-                .anyMatch(keyword -> aboutJob1.contains(keyword));
-        }
+
+        // Разбиваем составные ключевые фразы на отдельные слова
+        Set<String> splitKeywords = includeKeywords.stream()
+                .flatMap(keyword -> Set.of(keyword.split("\\s+")).stream()) // Разделение по пробелам
+                .collect(Collectors.toSet());
+
+        // Проверяем, есть ли хотя бы одно совпадение
+        return splitKeywords.stream()
+                .anyMatch(aboutJobLower::contains);
+    }
 }
